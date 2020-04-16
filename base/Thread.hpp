@@ -14,23 +14,18 @@
 
 namespace chatRoom{
 
-class thread : noncopyable{
+class thread{
 	public:
-		typedef std::packaged_task<void()> threadTask;
-		typedef std::shared_ptr<threadTask> threadTaskPtr;
+		typedef std::function<void()> Func;
 
 		template<typename Fn,typename... Args>
 		thread(Fn&& f, Args&&... args)
 		: threadID_(0),
 		name_(),
 		started_(false),
-		joined_(false)
-		{
-			func_ = std::move(
-					std::make_shared<threadTask>(
-					std::bind(std::forward<Fn>(f),std::forward<Args>(args)...)
-					));
-		}
+		joined_(false),
+		func_(std::bind(std::forward<Fn>(f),std::forward<Args>(args)...))
+		{ }
 		
 		~thread();
 
@@ -43,13 +38,13 @@ class thread : noncopyable{
 		void setName(const std::string& name) { name_ = std::move(name); }
 
 		void callFunc(){
-			(*func_)();
+			func_();
 		}
 
 	private:
 		pthread_t		threadID_;
 		std::string 	name_;
-		threadTaskPtr 	func_;
+		Func		 	func_;
 		bool 			started_;
 		bool			joined_;
 };

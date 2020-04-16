@@ -8,8 +8,9 @@
 #include<functional>
 #include<unistd.h>
 #include<syscall.h>
-#include<future>
+#include<type_traits>
 #include<memory>
+#include<future>
 
 namespace chatRoom{
 
@@ -17,18 +18,18 @@ class thread : noncopyable{
 	public:
 		typedef std::packaged_task<void()> threadTask;
 		typedef std::shared_ptr<threadTask> threadTaskPtr;
-		typedef void*(*threadFunc)();
 
-		template<typename F,typename... Args>
-		thread(F&& f, Args&&... args)
+		template<typename Fn,typename... Args>
+		thread(Fn&& f, Args&&... args)
 		: threadID_(0),
 		name_(),
 		started_(false),
 		joined_(false)
 		{
-			func_ = std::make_shared<threadTask>(
-					std::bind(std::forward<F>(f),std::forward<Args>(args)...)
-					);
+			func_ = std::move(
+					std::make_shared<threadTask>(
+					std::bind(std::forward<Fn>(f),std::forward<Args>(args)...)
+					));
 		}
 		
 		~thread();
@@ -40,6 +41,7 @@ class thread : noncopyable{
 		const std::string& name() { return name_; }
 		pid_t	tid() { return static_cast<pid_t>(::syscall(SYS_gettid)); }
 		void setName(const std::string& name) { name_ = std::move(name); }
+
 		void callFunc(){
 			(*func_)();
 		}
@@ -50,7 +52,6 @@ class thread : noncopyable{
 		threadTaskPtr 	func_;
 		bool 			started_;
 		bool			joined_;
-
 };
 
 }

@@ -9,26 +9,26 @@
 namespace chatRoom
 {
 
-	class ErrorLog : noncopyable{
-		public:
-			ErrorLog(std::ostream& stream = std::cout) : defaultStream(stream){};
+class ErrorLog : noncopyable{
+	public:
+		ErrorLog(std::ostream& stream = std::cout) : defaultStream(stream){};
 
-			std::ostream& operator<<(std::string& msg){
-				defaultStream << msg;
-				return defaultStream;
-			}
+		std::ostream& operator<<(std::string& msg){
+			defaultStream << msg;
+			return defaultStream;
+		}
 
-			template<int charArrayLen>
-			std::ostream& operator<<(const char(&msg)[charArrayLen]){
-				defaultStream << msg;
-				return defaultStream;
-			}
+		template<int charArrayLen>
+		std::ostream& operator<<(const char(&msg)[charArrayLen]){
+			defaultStream << msg;
+			return defaultStream;
+		}
 
-		private:
-			std::ostream& defaultStream;
-	};
+	private:
+		std::ostream& defaultStream;
+};
 
-	ErrorLog coutErrorLog;
+ErrorLog coutErrorLog;
 
 } // namespace chatRoom
 

@@ -23,32 +23,12 @@ namespace chatRoom
             worker.join();
     }
 
-    template<typename Fn, typename... Args>
-    void threadPool::enqueue(Fn&& f, Args&&... args){
-
-        // I don't know if there's another way to check the return type
-        if(std::is_same<typename std::result_of<Fn(Args...)>::type, void>::value == true){
-            auto task = std::make_shared<std::packaged_task<void()> >(
-                std::bind(std::forward<Fn>(f), std::forward<Args>(args)...)
-            );
-            {
-                mutexGuard lock(mutex_);
-                assert(started_ == true);
-                tasks_.emplace( [task](){
-                                    (*task)(); 
-                                    });
-            }
-            cond_.notifyOne();
-        }
-    }
-
     void threadPool::start(){
         {
             mutexGuard lock(mutex_);
             assert(started_ == false);
             started_ = true;
         }
-
         for(int i = 0; i < numOfThreads; ++i){
             thread t(
                 [this](){
@@ -69,6 +49,7 @@ namespace chatRoom
             );
             // Errors are raised if passed with std::move
             workers_.push_back(t);
+            workers_[i].start();
         }
     }
 

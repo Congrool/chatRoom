@@ -1,11 +1,12 @@
-#ifndef ERRORLOG_HPP
-#define ERRORLOG_HPP 0
+#ifndef CHATROOM_BASE_ERRORLOG_HPP
+#define CHATROOM_BASE_ERRORLOG_HPP 0
 
 
 #include "base/noncopyable.hpp"
 
 #include<iostream>
 #include<sstream>
+
 namespace chatRoom
 {
 
@@ -28,8 +29,9 @@ class ErrorLog : noncopyable{
 		std::ostream& defaultStream;
 };
 
-ErrorLog coutErrorLog;
+extern ErrorLog coutErrorLog;
 
 } // namespace chatRoom
+
 
 #endif // ERRORLOG_HPP

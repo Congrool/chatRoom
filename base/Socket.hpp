@@ -34,12 +34,12 @@ namespace chatRoom
 			struct sockaddr_in addr_;
 	};
 
-	class socket{
+	class Socket{
 		public:
 			explicit 
-			socket(int sockfd) : sockfd_(sockfd) { }
+			Socket(int sockfd) : sockfd_(sockfd) { }
 			
-			~socket() = default;
+			~Socket() = default;
 			
 			int fd() { return sockfd_; }
 
@@ -48,6 +48,8 @@ namespace chatRoom
 			void listen();
 
 			int accept();
+
+			void connect(NetAddress);
 
 			void shutdownWrite();
 

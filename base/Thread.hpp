@@ -14,12 +14,12 @@
 
 namespace chatRoom{
 
-class thread{
+class Thread{
 	public:
 		typedef std::function<void()> Func;
 
 		template<typename Fn,typename... Args>
-		thread(Fn&& f, Args&&... args)
+		Thread(Fn&& f, Args&&... args)
 		: threadID_(0),
 		name_(),
 		started_(false),
@@ -27,12 +27,12 @@ class thread{
 		func_(std::bind(std::forward<Fn>(f),std::forward<Args>(args)...))
 		{ }
 		
-		~thread();
+		~Thread();
 
 		void start();	// call pthread_create
 		int join();
 		pthread_t self() { return threadID_; }
-		bool equal(thread& t) { return pthread_equal(this->threadID_,t.self()) != 0;}
+		bool equal(Thread& t) { return pthread_equal(this->threadID_,t.self()) != 0;}
 		const std::string& name() { return name_; }
 		pid_t	tid() { return static_cast<pid_t>(::syscall(SYS_gettid)); }
 		void setName(const std::string& name) { name_ = std::move(name); }

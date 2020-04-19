@@ -8,15 +8,15 @@
 
 namespace chatRoom{
 
-	class mutex : noncopyable
+	class Mutex : noncopyable
 	{
 		public:
-			mutex(){
+			Mutex(){
 				int ret = pthread_mutex_init(&mutex_,NULL);
 				assert(ret == 0);
 			}
 
-			~mutex(){
+			~Mutex(){
 				int ret = pthread_mutex_destroy(&mutex_);
 				assert(ret == 0);
 			}
@@ -39,7 +39,7 @@ namespace chatRoom{
 	class mutexGuard : noncopyable{
 		public:
 
-			explicit mutexGuard(mutex& mutex) : mutex_(mutex){
+			explicit mutexGuard(Mutex& mutex) : mutex_(mutex){
 				mutex_.lock();
 			}
 
@@ -48,7 +48,7 @@ namespace chatRoom{
 			}
 
 		private:
-			mutex& mutex_;
+			Mutex& mutex_;
 	};
 } // namespace chatRoom
 

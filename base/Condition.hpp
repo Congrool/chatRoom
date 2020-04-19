@@ -10,15 +10,15 @@
 namespace chatRoom
 {
 
-  class condition : noncopyable
+  class Condition : noncopyable
 	{
 		public:
-			condition(mutex& mutex) : mutex_(mutex){
+			Condition(Mutex& mutex) : mutex_(mutex){
 				int ret = pthread_cond_init(&cond_, NULL);
 				assert(ret == 0);
 			}
 
-			~condition(){
+			~Condition(){
 				int ret = pthread_cond_destroy(&cond_);
 				assert(ret == 0);
 			}
@@ -40,7 +40,7 @@ namespace chatRoom
 			}
 
 		private:
-			mutex&					mutex_;
+			Mutex&					mutex_;
 			pthread_cond_t 	cond_;
 	};
 	

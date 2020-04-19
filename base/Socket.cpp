@@ -35,7 +35,7 @@ namespace chatRoom
         this->addr_.sin_port = toNet16(port);
     }
 
-    void socket::bind(NetAddress& addr){
+    void Socket::bind(NetAddress& addr){
         if(::bind(sockfd_,
             (const struct sockaddr*)addr.getAddr(),
             static_cast<socklen_t>(sizeof(sockaddr_in)))
@@ -45,12 +45,12 @@ namespace chatRoom
         }
     }
 
-    void socket::listen(){
+    void Socket::listen(){
         if(::listen(sockfd_,SOMAXCONN) < 0)
             coutErrorLog << "listen error" << std::endl;
     }
 
-    int socket::accept(){
+    int Socket::accept(){
         int connfd = -1;
         sockaddr peeraddr;
         socklen_t addrlen = static_cast<socklen_t>(sizeof(peeraddr));
@@ -63,14 +63,25 @@ namespace chatRoom
         return connfd;
     }
 
-    void socket::shutdownWrite(){
+    void Socket::connect(NetAddress addr){
+        int ret = -1;
+        if((ret = ::connect(this->sockfd_,
+                            (sockaddr*)addr.getAddr(),
+                            static_cast<socklen_t>(sizeof(sockaddr_in))))
+                            < 0)
+        {
+            coutErrorLog << "connect Error" << std::endl;
+        }
+    }
+
+    void Socket::shutdownWrite(){
         if(::shutdown(sockfd_,SHUT_WR) < 0)
         {
             coutErrorLog << "socket::shutdownWrite error";
         }
     }
 
-    void socket::setKeepAlive(bool on){
+    void Socket::setKeepAlive(bool on){
         int optval = on ? 1 : 0;
         ::setsockopt(sockfd_, SOL_SOCKET, SO_KEEPALIVE,
                     &optval,static_cast<socklen_t>(sizeof(optval)));

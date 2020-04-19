@@ -28,9 +28,7 @@ class ErrorLog : noncopyable{
 	private:
 		std::ostream& defaultStream;
 };
-
-extern ErrorLog coutErrorLog;
-
+	extern ErrorLog coutErrorLog;
 } // namespace chatRoom
 
 

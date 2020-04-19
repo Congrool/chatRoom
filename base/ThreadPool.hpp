@@ -10,13 +10,13 @@
 
 namespace chatRoom
 {
-	class threadPool : noncopyable
+	class ThreadPool : noncopyable
 	{
 		public:
 			typedef std::function<void()>	taskFunc;
 
-			threadPool(int);
-			~threadPool();
+			ThreadPool(int);
+			~ThreadPool();
 			
 			template<typename Fn, typename... Args>
 			void enqueue(Fn&& f, Args&&... args){
@@ -42,15 +42,15 @@ namespace chatRoom
 			bool hasStarted() { return started_; }
 
 		private:
-			std::vector<thread>		workers_;
+			std::vector<Thread>		workers_;
 			std::queue<taskFunc>	tasks_;
 
 			int				numOfThreads;
 			bool 			started_;
 			// The order of the following two members
 			// should not be changed, because of list initialization.
-			mutex 		mutex_;
-			condition 	cond_;
+			Mutex 		mutex_;
+			Condition 	cond_;
 
 	};
   

@@ -7,19 +7,19 @@ namespace chatRoom{
 
     void* runInStart(void* obj){
         if(obj){
-            thread* p = static_cast<thread*>(obj);
+            Thread* p = static_cast<Thread*>(obj);
             p->callFunc();
         }
         return nullptr;
     }
 
-    thread::~thread(){
+    Thread::~Thread(){
         if(started_ && !joined_ ){
             pthread_detach(threadID_);
         }
     }
 
-    void thread::start(){
+    void Thread::start(){
         if(started_) return;
         started_ = true;
         if(pthread_create(&threadID_,
@@ -32,7 +32,7 @@ namespace chatRoom{
         }
     }
 
-    int thread::join(){
+    int Thread::join(){
         assert(started_);
         assert(!joined_);
         joined_ = true;

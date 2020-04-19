@@ -6,31 +6,31 @@
 
 namespace chatRoom
 {
-    threadPool::threadPool(int num)
+    ThreadPool::ThreadPool(int num)
     : numOfThreads(num),
      started_(false),
      mutex_(),
      cond_(mutex_)
     { }
 
-    threadPool::~threadPool(){
+    ThreadPool::~ThreadPool(){
         {
             mutexGuard lock(mutex_);
             started_ = false;
         }
         cond_.notifyAll();
-        for(thread& worker : workers_)
+        for(Thread& worker : workers_)
             worker.join();
     }
 
-    void threadPool::start(){
+    void ThreadPool::start(){
         {
             mutexGuard lock(mutex_);
             assert(started_ == false);
             started_ = true;
         }
         for(int i = 0; i < numOfThreads; ++i){
-            thread t(
+            Thread t(
                 [this](){
                     for(;;){
                         taskFunc task;

@@ -22,9 +22,9 @@ class Thread{
 		Thread(Fn&& f, Args&&... args)
 		: threadID_(0),
 		name_(),
+		func_(std::bind(std::forward<Fn>(f),std::forward<Args>(args)...)),
 		started_(false),
-		joined_(false),
-		func_(std::bind(std::forward<Fn>(f),std::forward<Args>(args)...))
+		joined_(false)
 		{ }
 		
 		~Thread();

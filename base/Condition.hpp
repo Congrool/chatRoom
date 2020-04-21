@@ -24,7 +24,6 @@ namespace chatRoom
 			}
 
 			void wait(){
-				mutexGuard guard(mutex_);
 				int ret = pthread_cond_wait(&cond_, mutex_.getMutexPtr());
 				assert(ret == 0);
 			}

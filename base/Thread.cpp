@@ -10,7 +10,7 @@ namespace chatRoom{
             Thread* p = static_cast<Thread*>(obj);
             p->callFunc();
         }
-        return nullptr;
+        return NULL;
     }
 
     Thread::~Thread(){
@@ -25,7 +25,7 @@ namespace chatRoom{
         if(pthread_create(&threadID_,
                             nullptr,
                             runInStart,
-                            (void*)this))    
+                            (void*)this) != 0)    
         {
             started_ = false;
             coutErrorLog << "pthread_create error" << std::endl;
@@ -36,6 +36,6 @@ namespace chatRoom{
         assert(started_);
         assert(!joined_);
         joined_ = true;
-        return pthread_join(threadID_,nullptr);
+        return pthread_join(threadID_, NULL);
     }
 }

@@ -66,6 +66,7 @@ namespace chatRoom
     }
 
     void Poller::poll(int timeout, ChannelList& list){
+        assert(started_ == true);
         int ret = ::poll(pollfds_.begin().base(),pollfds_.size(),timeout);
         // why should we save errno?
         int savedError = errno;

@@ -23,15 +23,12 @@ namespace chatRoom
 
 				// I don't know if there's some way to check the return type
 				// if(std::is_same<typename std::result_of<Fn(Args...)>::type, void>::value == true){
-					auto task = std::make_shared<std::packaged_task<void()> >(
-						std::bind(std::forward<Fn>(f), std::forward<Args>(args)...)
-					);
+					auto task = std::bind(std::forward<Fn>(f), std::forward<Args>(args)...);
+					auto taskPtr = std::make_shared<decltype(task)>(task);
 					{
 						mutexGuard lock(mutex_);
 						assert(started_ == true);
-						tasks_.emplace( [task](){
-											(*task)(); 
-											});
+						tasks_.emplace([taskPtr](){ (*taskPtr)(); });
 					}
 					cond_.notifyOne();
 				// }

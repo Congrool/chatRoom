@@ -25,6 +25,8 @@ namespace chatRoom
 			// ChannelList used to return ready Channels.
 			void poll(int timeout, ChannelList&);
 
+			// FIXME: started_ may be in the critical region
+			// and should be protected by a lockguard when modified.
 			bool hasStarted() { return started_; }
 			void start() { started_ = true; }
 			void stop() { started_ = false; }

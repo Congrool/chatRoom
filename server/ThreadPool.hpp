@@ -1,5 +1,5 @@
-#ifndef THREAD_POOL_HPP
-#define THREAD_POOL_HPP 0
+#ifndef CHATROOM_SERVER_THREADPOOL_HPP
+#define CHATROOM_SERVER_THREADPOOL_HPP 0
 
 #include "base/noncopyable.hpp"
 #include "base/Condition.hpp"

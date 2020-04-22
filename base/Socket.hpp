@@ -6,6 +6,7 @@
 
 namespace chatRoom
 {
+	// Managing struct sockaddr_in type in network order.
 	class NetAddress{
 		public:
 			// wrapper for sockaddr_in
@@ -23,6 +24,11 @@ namespace chatRoom
 			// Both of them are in host byte order.
 			explicit
 			NetAddress(uint16_t, uint32_t = INADDR_ANY);
+
+			// Using sockaddr_in as parameter
+			explicit
+			NetAddress(sockaddr_in* addr);
+
 
 			~NetAddress() = default;
 
@@ -47,7 +53,7 @@ namespace chatRoom
 
 			void listen();
 
-			int accept();
+			int accept(sockaddr_in*);
 
 			void connect(NetAddress);
 

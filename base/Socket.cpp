@@ -35,6 +35,13 @@ namespace chatRoom
         this->addr_.sin_port = toNet16(port);
     }
 
+    NetAddress::NetAddress(sockaddr_in* addr){
+        memZero(static_cast<void*>(&(this->addr_)),sizeof(this->addr_));
+        this->addr_.sin_family = AF_INET;
+        this->addr_.sin_addr.s_addr = toNet32(addr->sin_addr.s_addr);
+        this->addr_.sin_port = toNet16(addr->sin_port);
+    }
+
     void Socket::bind(NetAddress& addr){
         if(::bind(sockfd_,
             (const struct sockaddr*)addr.getAddr(),
@@ -50,16 +57,18 @@ namespace chatRoom
             coutErrorLog << "listen error" << std::endl;
     }
 
-    int Socket::accept(){
+    int Socket::accept(sockaddr_in* peerAddrRet){
         int connfd = -1;
         sockaddr peeraddr;
         socklen_t addrlen = static_cast<socklen_t>(sizeof(peeraddr));
         if((connfd =::accept(sockfd_,
                         &peeraddr,
-                        &addrlen) < 0))
+                        &addrlen)) < 0)
         {
             coutErrorLog << "accpet Error" << std::endl;
         }
+        sockaddr_in* peeraddrPtr = (sockaddr_in*)(&peeraddr);
+        memcpy(peerAddrRet,peeraddrPtr,static_cast<size_t>(addrlen));
         return connfd;
     }
 

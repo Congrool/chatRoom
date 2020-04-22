@@ -1,5 +1,5 @@
-#ifndef CHATROOM_BASE_CHANNEL_HPP
-#define CHATROOM_BASE_CHANNEL_HPP 0
+#ifndef CHATROOM_SERVER_CHANNEL_HPP
+#define CHATROOM_SERVER_CHANNEL_HPP 0
 
 #include <functional>
 #include <memory>
@@ -71,4 +71,4 @@ namespace chatRoom
 	
 } // namespace chatRoom
 
-#endif // CHATROOM_BASE_CHANNEL_ROOM
+#endif // CHATROOM_SERVER_CHANNEL_HPP

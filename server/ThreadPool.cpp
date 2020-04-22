@@ -1,4 +1,4 @@
-#include "base/ThreadPool.hpp"
+#include "server/ThreadPool.hpp"
 
 #include <type_traits>
 #include <memory>
@@ -33,11 +33,12 @@ namespace chatRoom
 		// to a new allocated space at which time destructor is invoked.
 		// However, destructor for class Thread is specially defined 
 		// which may call pthread_detach(). That means the thread is wild 
-		// and out of control, but still wait on cond_. Then, when
+		// and out of control, but still waiting on cond_. Then, when
 		// ThreadPool notifies threads which are waiting on cond_, the
 		// wild thread will be waked up as well, which may visit the memory
 		// the ThreadPool owns, even after the ThreadPool is destructed.
 		// It's dangerous and inconspicuous.
+		// It took me several hours to find the problem. :-(
 		workers_.reserve(numOfThreads);
 		for(int i = 0; i < numOfThreads; ++i){
 			workers_.emplace_back(

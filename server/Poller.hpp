@@ -2,7 +2,7 @@
 #define CHATROOM_BASE_POLLER_HPP 0
 
 #include "base/noncopyable.hpp"
-#include "base/Channel.hpp"
+#include "server/Channel.hpp"
 
 #include <vector>
 #include <map>

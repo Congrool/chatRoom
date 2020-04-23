@@ -4,6 +4,7 @@
 #include "base/noncopyable.hpp"
 #include <vector>
 #include <sys/uio.h>
+#include <memory.h>
 
 namespace chatRoom
 {
@@ -23,15 +24,24 @@ namespace chatRoom
 			// Return num of bytes actually read.
 			size_t read(int fd);
 
+			size_t write(int fd);
+
+			void append(char* buff, size_t len);
 
 			void retrieveAll();
 
 			void retrieveLen(size_t len);
 
-			size_t readableSize();
+			size_t readableSize() const;
 
-			size_t writeableSize();
+			size_t writeableSize() const;
 
+			const char* readStart() 
+			{ return begin() + readableStart_; } 
+
+			// FIXME:
+			// Maybe it should not be exposed to outside.
+			// It's not safe.
 			char* begin() { return buffer_.begin().base(); }
 
 			size_t size() { return buffer_.size(); }

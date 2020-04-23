@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <algorithm>
+#include <unistd.h>
 
 namespace chatRoom
 {
@@ -42,6 +43,23 @@ namespace chatRoom
         return hasRead;
     }
 
+    size_t Buffer::write(int fd){
+        size_t hasWrite = ::write(fd,
+                                begin()+readableStart_,
+                                readableSize());
+        retrieveLen(hasWrite);
+        return hasWrite;
+    }
+
+    void Buffer::append(char* buff, size_t len){
+        if(writeableSize() < len)
+            buffer_.resize(writeableStart_+len);
+        memcpy(
+            buffer_.begin().base()+writeableStart_,
+            buff, len
+        );
+        writeableStart_ += len;
+    }
 
     void Buffer::retrieveAll(){
         readableStart_ = prefixSize_;
@@ -50,13 +68,16 @@ namespace chatRoom
 
     void Buffer::retrieveLen(size_t len){
         readableStart_ += len;
+        if(readableSize() == 0)
+            retrieveAll();
     }
 
-    size_t Buffer::readableSize(){
+
+    size_t Buffer::readableSize() const{
         return static_cast<size_t>(writeableStart_ - readableStart_);
     }
 
-    size_t Buffer::writeableSize(){
+    size_t Buffer::writeableSize() const{
         return static_cast<size_t>(buffer_.size() - writeableStart_);
     }
 

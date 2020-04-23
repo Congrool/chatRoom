@@ -12,8 +12,8 @@ namespace chatRoom
     class Acceptor{
         public:
             typedef std::function<void(int,NetAddress)> NewConnFunc;
-            Acceptor(int fd,NetAddress&);
-            ~Acceptor() = default;
+            Acceptor(int fd,NetAddress&,Poller&);
+            ~Acceptor();
 
             void handleRead();
 
@@ -22,12 +22,15 @@ namespace chatRoom
 
             void listen();
 
-            void addAcceptChannel(Poller& );
+            void addAcceptChannel();
+            void removeAcceptChannel();
 
 
         private:
             Socket acceptSockfd_;
             Channel acceptChannel_;
+            ChannelPtr accpetChannelPtr_;
+            Poller& owner_;
             
             // Provided by Users.
             // Called when acceptSockfd_ ready.

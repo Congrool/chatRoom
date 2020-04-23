@@ -4,13 +4,20 @@
 
 namespace chatRoom
 {
-    Acceptor::Acceptor(int fd, NetAddress& listenAddr)
+    Acceptor::Acceptor(int fd, NetAddress& listenAddr, Poller& poller)
     : acceptSockfd_(fd),
-    acceptChannel_(fd)
+    acceptChannel_(fd),
+    accpetChannelPtr_(std::make_shared<Channel>(acceptChannel_)),
+    owner_(poller)
     { 
         acceptSockfd_.bind(listenAddr);
         acceptChannel_.setReadEventCallback(
-            std::bind(handleRead,this));
+            std::bind(handleRead,this)
+        );
+    }
+
+    Acceptor::~Acceptor(){
+        removeAcceptChannel();
     }
 
     void Acceptor::handleRead(){
@@ -26,10 +33,14 @@ namespace chatRoom
     void Acceptor::listen(){
         acceptSockfd_.listen();
         acceptChannel_.enableReading();
+        addAcceptChannel();
     }
     
-    void Acceptor::addAcceptChannel(Poller& poller){
-        poller.updateChannel(
-            std::make_shared<Channel>(acceptChannel_));
+    void Acceptor::addAcceptChannel(){
+        owner_.updateChannel(accpetChannelPtr_);
+    }
+
+    void Acceptor::removeAcceptChannel(){
+        owner_.removeChannel(accpetChannelPtr_);
     }
 } // namespace chatRoom

@@ -8,20 +8,31 @@ namespace chatRoom
     Poller::Poller()
     : started_(false)
     { }
+
+    Poller::~Poller()
+    {
+        mutexGuard lockGuard(mutex_);
+        channelMaps_.clear();
+    }
+
     void Poller::updateChannel(ChannelPtr channel){
         // add a new channel
         if(channel->index == -1){
-            assert(channelMaps_.count(channel->fd()) == 0);
             struct pollfd pfd;
             pfd.fd = channel->fd();
             pfd.events = channel->events();
             pfd.revents = 0;
-            channel->set_index(static_cast<int>(pollfds_.size())-1);
-            pollfds_.emplace_back(std::move(pfd));
-            channelMaps_[channel->index()] = channel;
+            {
+                channel->set_index(static_cast<int>(pollfds_.size())-1);
+                mutexGuard lockGuard(mutex_);
+                assert(channelMaps_.count(channel->fd()) == 0);
+                pollfds_.emplace_back(std::move(pfd));
+                channelMaps_[channel->index()] = channel;
+            }
         }
         // update an exsiting channel
         else{
+            mutexGuard lockGuard(mutex_);
             assert((channelMaps_.count(channel->fd()) == 1)
                 && channelMaps_[channel->fd()] == channel);
             assert(0 <= channel->index()
@@ -39,6 +50,7 @@ namespace chatRoom
     }
 
     void Poller::removeChannel(ChannelPtr channel){
+        mutexGuard lockGuard(mutex_);
         if(channelMaps_.count(channel->fd()) == 0)
             return;
         assert(channelMaps_[channel->fd()] == channel);
@@ -66,26 +78,30 @@ namespace chatRoom
     }
 
     void Poller::poll(int timeout, ChannelList& list){
-        assert(started_ == true);
-        int ret = ::poll(pollfds_.begin().base(),pollfds_.size(),timeout);
-        // why should we save errno?
-        int savedError = errno;
-        // revents of pollfd has been updated
-        if(ret > 0){ 
-            for(auto& it:pollfds_){
-                // revents of pollfd with negative fd has been set as 0;
-                // So it will be skipped automatically.
-                if(it.revents > 0){
-                    std::map<int,ChannelPtr>::const_iterator chp = 
-                                    channelMaps_.find(it.fd);
-                    assert(chp != channelMaps_.end());
-                    assert(chp->second->fd == it.fd);
-                    chp->second->set_revents(it.revents);
-                    list.push_back(chp->second);
+        int ret,savedError;
+        {
+            mutexGuard lockGuard(mutex_);
+            assert(started_ == true);
+            ret = ::poll(pollfds_.begin().base(),pollfds_.size(),timeout);
+            // why should we save errno?
+            savedError = errno;
+            // revents of pollfd has been updated
+            if(ret > 0){ 
+                for(auto& it:pollfds_){
+                    // revents of pollfd with negative fd has been set as 0;
+                    // So it will be skipped automatically.
+                    if(it.revents > 0){
+                        std::map<int,ChannelPtr>::const_iterator chp = 
+                                        channelMaps_.find(it.fd);
+                        assert(chp != channelMaps_.end());
+                        assert(chp->second->fd == it.fd);
+                        chp->second->set_revents(it.revents);
+                        list.push_back(chp->second);
+                    }
                 }
             }
         }
-        else if(ret == 0){
+        if(ret == 0){
             // do nothing
         }
         else{
@@ -99,5 +115,19 @@ namespace chatRoom
                 coutErrorLog << "poll error: ENOMEM";
             // Other errors are impossible, I think.
         }
+    }
+
+    void Poller::start() 
+    { 
+        mutexGuard lockGuard(mutex_); 
+        assert(started_ == false);
+        started_ = true; 
+    }
+
+    void Poller::stop()
+    {
+        mutexGuard lockGuard(mutex_);
+        assert(started_ == true);
+        started_ = false;
     }
 } // namespace chatRoom

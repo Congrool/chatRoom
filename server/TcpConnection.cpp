@@ -4,23 +4,24 @@
 
 namespace chatRoom
 {
-    TcpConnection::TcpConnection(int connfd, Poller& poller, 
-                       NetAddress& local, NetAddress& peer)
+    TcpConnection::TcpConnection(int connfd,
+                                NetAddress& local, 
+                                NetAddress& peer)
     : connfd_(connfd),
     connChannel_(connfd),
     connChannelPtr_(std::make_shared<Channel>(connChannel_)),
-    owner_(poller),
     inputBuffer(),
     outputBuffer(),
     closed_(false),
     localAddr_(local),
-    peerAddr_(peer)
+    peerAddr_(peer),
+    selfPtr(std::move(std::make_shared<TcpConnection>(*this)))
     {
         connChannel_.setWriteEventCallback(
-            std::bind(handleWrite,this)
+            std::bind(&TcpConnection::handleWrite,this)
         );
         connChannel_.setReadEventCallback(
-            std::bind(handleRead,this)
+            std::bind(&TcpConnection::handleRead,this)
         );
         connChannel_.enableReading();
         connChannel_.enbaleWriting();
@@ -29,17 +30,8 @@ namespace chatRoom
     TcpConnection::~TcpConnection(){
         assert(closed_);
         assert(connChannelPtr_->isNonevent());
-        removeConnChannel();
         if(connClosedCallback_)
-            connClosedCallback_();
-    }
-
-    void TcpConnection::addConnChannel(){
-        owner_.updateChannel(this->connChannelPtr_);
-    }
-
-    void TcpConnection::removeConnChannel(){
-        owner_.removeChannel(this->connChannelPtr_);
+            connClosedCallback_(selfPtr);
     }
 
     void TcpConnection::send(char* buff, size_t len){
@@ -52,20 +44,42 @@ namespace chatRoom
 
 
     void TcpConnection::handleRead(){
-         if(closed_){
+        int hasRead = inputBuffer.read(connfd_.fd());
+        if(hasRead > 0)
+        {
+
+            if(receiveCallback_)
+                receiveCallback_(
+                    inputBuffer.readStart(),
+                    inputBuffer.readableSize()
+                );
+        }
+        else if(hasRead == 0)
+        {
+            closed_ = true;
+            closeConn();
+        }
+        else // hasRead < 0, handle Error
+        {
+            // Temporarily, do nothing
+        }
+    }
+
+    void TcpConnection::closeConn()
+    {
+        if(closed_){
             if(inputBuffer.readableSize() == 0)
                 connChannelPtr_->disableReading();         
             else{
                 if(receiveCallback_)
-                    receiveCallback_();
+                    receiveCallback_(
+                        inputBuffer.begin(),
+                        inputBuffer.readableSize()
+                        );
             } 
          }
-         else{
-             inputBuffer.read(connfd_.fd());
-             if(receiveCallback_)
-                    receiveCallback_();
-         }
     }
+    
 
     void TcpConnection::handleWrite(){
         if(closed_ && outputBuffer.readableSize() == 0){         

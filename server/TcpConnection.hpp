@@ -21,24 +21,27 @@ namespace chatRoom
      */
     class TcpConnection : noncopyable{
         public:
-            typedef std::function<void(std::string&)> sendCallbackFunc;
-            typedef std::function<void()> receiveCallbackFunc;
-            typedef std::function<void()> connClosedCallbackFunc;
+            typedef std::function<void(std::string&)>       sendCallbackFunc;
+            typedef std::function<
+                    void(const char* first,size_t len)>     receiveCallbackFunc;
+            typedef std::function<void(TcpConnectionPtr&)>  connClosedCallbackFunc;
             typedef Buffer::size_t size_t;
+            typedef std::shared_ptr<TcpConnection>          pointer;
             // using fd returned by accept() as the argument
             explicit
-            TcpConnection(int connfd,Poller& ,
-                        NetAddress& local, NetAddress& peer);
+            TcpConnection(int connfd,
+                        NetAddress& local,
+                        NetAddress& peer);
 
             ~TcpConnection();
 
-            void setSendCallback(sendCallbackFunc& func)
+            void setSendCallback(sendCallbackFunc func)
             { sendCallback_ = func; }
 
-            void setReceiveCallback(receiveCallbackFunc& func)
+            void setReceiveCallback(receiveCallbackFunc func)
             { receiveCallback_ = func; }
 
-            void setConnClosedCallback(connClosedCallbackFunc& func)
+            void setConnClosedCallback(connClosedCallbackFunc func)
             { connClosedCallback_ = func; }
 
             void handleRead();
@@ -48,9 +51,6 @@ namespace chatRoom
             void send(char* buff, size_t len);
             void send(std::string& );
 
-            void addConnChannel();
-            void removeConnChannel();
-
             bool hasBytesToRead() const 
             { return outputBuffer.readableSize(); }
 
@@ -59,12 +59,16 @@ namespace chatRoom
             
             void close() { closed_ = true; }
 
+            const ChannelPtr& getChannelPtr()
+            { return connChannelPtr_; }
+
+            const pointer& getSelfPtr() const
+            { return selfPtr; }
+
         private:
             Socket connfd_;
             Channel connChannel_;
             ChannelPtr connChannelPtr_;
-
-            Poller& owner_;
             
             Buffer inputBuffer;
             Buffer outputBuffer;
@@ -77,7 +81,13 @@ namespace chatRoom
             sendCallbackFunc sendCallback_;
             receiveCallbackFunc receiveCallback_;
             connClosedCallbackFunc connClosedCallback_;
+
+            pointer selfPtr;
+
+            void closeConn();
     };
+
+    typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 } // namespace chatRoom
 
 #endif // CHATROOM_SERVER_TCPCONNECTION_HPP

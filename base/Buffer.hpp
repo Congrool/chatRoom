@@ -10,7 +10,7 @@ namespace chatRoom
 {
 	// Used as user buffer
 
-  class Buffer : noncopyable
+  	class Buffer 
 	{
 		public:
 			typedef std::vector<char>::size_type size_t;

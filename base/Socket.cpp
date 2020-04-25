@@ -92,12 +92,6 @@ namespace chatRoom
         }
     }
 
-    void Socket::shutdownRead(){
-        if(::shutdown(sockfd_,SHUT_RD) < 0)
-        {
-            coutErrorLog << "socket::shutdownRead error";
-        }
-    }
 
     void Socket::setKeepAlive(bool on){
         int optval = on ? 1 : 0;

@@ -29,8 +29,6 @@ namespace chatRoom
     TcpConnection::~TcpConnection(){
         assert(closed_);
         assert(connChannelPtr_->isNonevent());
-        if(connClosedCallback_)
-            connClosedCallback_(selfPtr);
     }
 
     void TcpConnection::send(char* buff, size_t len){
@@ -85,6 +83,8 @@ namespace chatRoom
         if(closed_ && outputBuffer.readableSize() == 0){         
             connChannelPtr_->disableWriting();
             connfd_.shutdownWrite();
+            if(connClosedCallback_)
+                connClosedCallback_(selfPtr);
         }
         else{
             size_t hasWrite = outputBuffer.write(connfd_.fd());
@@ -95,4 +95,11 @@ namespace chatRoom
         }
     }
 
+    void TcpConnection::forceToClose(){
+        closed_ = true;
+        connfd_.shutdownWrite();
+        connChannelPtr_->disableAll();
+        if(connClosedCallback_)
+            connClosedCallback_(selfPtr);
+    }
 } // namespace chatRoom

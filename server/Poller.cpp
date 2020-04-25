@@ -17,17 +17,17 @@ namespace chatRoom
 
     void Poller::updateChannel(ChannelPtr channel){
         // add a new channel
-        if(channel->index == -1){
+        if(channel->index() == -1){
             struct pollfd pfd;
             pfd.fd = channel->fd();
             pfd.events = channel->events();
             pfd.revents = 0;
             {
-                channel->set_index(static_cast<int>(pollfds_.size())-1);
+                channel->set_index(static_cast<int>(pollfds_.size()));
                 mutexGuard lockGuard(mutex_);
                 assert(channelMaps_.count(channel->fd()) == 0);
                 pollfds_.emplace_back(std::move(pfd));
-                channelMaps_[channel->index()] = channel;
+                channelMaps_[channel->fd()] = channel;
             }
         }
         // update an exsiting channel
@@ -87,16 +87,18 @@ namespace chatRoom
             savedError = errno;
             // revents of pollfd has been updated
             if(ret > 0){ 
-                for(auto& it:pollfds_){
+                int cnt = ret;
+                for(auto& it : pollfds_){
                     // revents of pollfd with negative fd has been set as 0;
                     // So it will be skipped automatically.
                     if(it.revents > 0){
-                        std::map<int,ChannelPtr>::const_iterator chp = 
-                                        channelMaps_.find(it.fd);
+                        auto chp = channelMaps_.find(it.fd);
                         assert(chp != channelMaps_.end());
-                        assert(chp->second->fd == it.fd);
+                        assert(chp->second->fd() == it.fd);
                         chp->second->set_revents(it.revents);
                         list.push_back(chp->second);
+                        --cnt;
+                        if(cnt == 0) break;
                     }
                 }
             }
@@ -104,7 +106,7 @@ namespace chatRoom
         if(ret == 0){
             // do nothing
         }
-        else{
+        else if(ret < 0){
             // Handle error
             // I don't know how to handle error. :-(
             // So just print "error". :-)

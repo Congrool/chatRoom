@@ -19,14 +19,14 @@ namespace chatRoom
      * be received by another side, and never be dropped 
      * because of the TcpConnection class.
      */
-    class TcpConnection : noncopyable{
+    class TcpConnection{
         public:
+            typedef std::shared_ptr<TcpConnection>          pointer;
             typedef std::function<void(std::string&)>       sendCallbackFunc;
             typedef std::function<
                     void(const char* first,size_t len)>     receiveCallbackFunc;
-            typedef std::function<void(TcpConnectionPtr&)>  connClosedCallbackFunc;
+            typedef std::function<void(pointer&)>   connClosedCallbackFunc;
             typedef Buffer::size_t size_t;
-            typedef std::shared_ptr<TcpConnection>          pointer;
             // using fd returned by accept() as the argument
             explicit
             TcpConnection(int connfd,
@@ -51,14 +51,17 @@ namespace chatRoom
             void send(char* buff, size_t len);
             void send(std::string& );
 
+            // Force the connection to close.
+            // Someone who call the function should 
+            // handle bytes stored in the buffer.
+            void forceToClose();
+
             bool hasBytesToRead() const 
             { return outputBuffer.readableSize(); }
 
             bool hasBytesToWrite() const 
             { return inputBuffer.readableSize(); }
             
-            void close() { closed_ = true; }
-
             const ChannelPtr& getChannelPtr()
             { return connChannelPtr_; }
 

@@ -37,7 +37,21 @@ namespace chatRoom
             void start();
 
             void stop();
-         
+
+            ConnContainer& getConnList()
+            { return conns_;}
+
+            void setOnConnClosedCallback(connClosedCallbackFunc func)
+            { onConnClosedCallback_ = func;}
+
+            void setOnReceiveCallback(receiveCallbackFunc func)
+            { onReceivedCallback_ = func; }
+
+            void setOnSendCallback(sendCallbackFunc func)
+            { onSendCallback_ = func; }
+
+            void setOnConnectionCallback(connEstablishedFunc func)
+            { onConnectionCallback_ = func; }
 
         private:
             NetAddress localAddr_;
@@ -52,7 +66,7 @@ namespace chatRoom
 
             ChannelList activeChannelList;
 
-            connClosedCallbackFunc  onClosedCallback_;
+            connClosedCallbackFunc  onConnClosedCallback_;
             receiveCallbackFunc     onReceivedCallback_;
             sendCallbackFunc        onSendCallback_;
             connEstablishedFunc     onConnectionCallback_;

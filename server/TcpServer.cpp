@@ -4,7 +4,7 @@ namespace chatRoom
 {
     TcpServer::TcpServer(uint16_t portNum,int numOfThreads)
     : localAddr_(portNum),
-    localSock_(::socket(localAddr_.family, SOCK_STREAM, 0)),
+    localSock_(::socket(localAddr_.family(), SOCK_STREAM, 0)),
     threadPool_(numOfThreads),
     poller_(),
     acceptor_(localSock_.fd(),localAddr_),
@@ -14,6 +14,10 @@ namespace chatRoom
         acceptor_.setConnEstablishedCallBack(
             std::bind(&TcpServer::ConnectionEstablished,this, _1, _2)
         );
+    }
+
+    TcpServer::~TcpServer(){
+        assert(started_ == false);
     }
 
     void TcpServer::
@@ -33,7 +37,8 @@ namespace chatRoom
         );
 
     }
-
+    
+    // FIXME:
     // Before stop, the server should send all bytes
     // in the output buffer of each connection. 
     void TcpServer::
@@ -45,6 +50,8 @@ namespace chatRoom
             started_ = false;
         }
         poller_.stop();
+        for(auto& it:conns_)
+            it->forceToClose();
     }
     
     
@@ -96,7 +103,7 @@ namespace chatRoom
             poller_.poll(0,activeChannelList);
             for(auto& it:activeChannelList)
             {
-                threadPool_.enqueue(it->handleEvent);
+                threadPool_.enqueue(&Channel::handleEvent,it.get());
             }
             
             activeChannelList.clear();
@@ -111,9 +118,9 @@ namespace chatRoom
             mutexGuard lockGuard(mutex_);
             conns_.erase(conn->getSelfPtr());
         }
-        if(onClosedCallback_)
+        if(onConnClosedCallback_)
             threadPool_.enqueue(
-                std::bind(onClosedCallback_,conn)
+                std::bind(onConnClosedCallback_,conn)
             );
     }
 } // namespace chatRoom

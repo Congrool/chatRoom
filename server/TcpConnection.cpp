@@ -8,8 +8,7 @@ namespace chatRoom
                                 NetAddress& local, 
                                 NetAddress& peer)
     : connfd_(connfd),
-    connChannel_(connfd),
-    connChannelPtr_(std::make_shared<Channel>(connChannel_)),
+    connChannelPtr_(std::make_shared<Channel>(connfd)),
     inputBuffer(),
     outputBuffer(),
     closed_(false),
@@ -17,14 +16,14 @@ namespace chatRoom
     peerAddr_(peer),
     selfPtr(std::move(std::make_shared<TcpConnection>(*this)))
     {
-        connChannel_.setWriteEventCallback(
+        connChannelPtr_->setWriteEventCallback(
             std::bind(&TcpConnection::handleWrite,this)
         );
-        connChannel_.setReadEventCallback(
+        connChannelPtr_->setReadEventCallback(
             std::bind(&TcpConnection::handleRead,this)
         );
-        connChannel_.enableReading();
-        connChannel_.enbaleWriting();
+        connChannelPtr_->enableReading();
+        connChannelPtr_->enbaleWriting();
     }
 
     TcpConnection::~TcpConnection(){
@@ -42,7 +41,8 @@ namespace chatRoom
         send(msg.begin().base(), msg.length());
     }
 
-
+    // If peer client has shutdown on write, the channel
+    // is always ready for read, and hasRead is 0.
     void TcpConnection::handleRead(){
         int hasRead = inputBuffer.read(connfd_.fd());
         if(hasRead > 0)
@@ -61,7 +61,7 @@ namespace chatRoom
         }
         else // hasRead < 0, handle Error
         {
-            // Temporarily, do nothing
+            // do nothing
         }
     }
 
@@ -73,9 +73,9 @@ namespace chatRoom
             else{
                 if(receiveCallback_)
                     receiveCallback_(
-                        inputBuffer.begin(),
+                        inputBuffer.readStart(),
                         inputBuffer.readableSize()
-                        );
+                    );
             } 
          }
     }

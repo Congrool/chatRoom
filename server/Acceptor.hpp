@@ -11,24 +11,23 @@ namespace chatRoom
 {  
     class Acceptor{
         public:
-            typedef std::function<void(int,NetAddress)> NewConnFunc;
-            Acceptor(int fd,NetAddress&,Poller&);
+            typedef std::function<void(int,NetAddress&)> NewConnFunc;
+            Acceptor(int fd,NetAddress&);
             ~Acceptor() = default;
 
             void handleRead();
 
-            void setConnEstablishedCallBack(NewConnFunc& func)
+            void setConnEstablishedCallBack(NewConnFunc func)
             { newConnCallback_ = func; }
 
             void listen();
 
             const ChannelPtr& getChannelPtr() const
-            { return accpetChannelPtr_; }
+            { return acceptChannelPtr_; }
 
         private:
             Socket acceptSockfd_;
-            Channel acceptChannel_;
-            ChannelPtr accpetChannelPtr_;
+            ChannelPtr acceptChannelPtr_;
             
             // Provided by Users.
             // Called when acceptSockfd_ ready.

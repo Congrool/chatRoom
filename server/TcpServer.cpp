@@ -7,10 +7,14 @@ namespace chatRoom
     localSock_(::socket(localAddr_.family, SOCK_STREAM, 0)),
     threadPool_(numOfThreads),
     poller_(),
-    acceptor_(localSock_.fd(),localAddr_,poller_),
+    acceptor_(localSock_.fd(),localAddr_),
     mutex_(),
     started_(false)
-    { }
+    { 
+        acceptor_.setConnEstablishedCallBack(
+            std::bind(&TcpServer::ConnectionEstablished,this, _1, _2)
+        );
+    }
 
     void TcpServer::
     start()
@@ -19,9 +23,9 @@ namespace chatRoom
         // Maybe should protect started_ with mutex_
         assert(started_ == false);
         started_ = true;
+        acceptor_.listen();
         poller_.updateChannel(acceptor_.getChannelPtr());
         // acceptor_::handleRead will call ::accept()
-        acceptor_.listen();     
         threadPool_.start();
         // set one Poller thread
         threadPool_.enqueue(
@@ -30,6 +34,8 @@ namespace chatRoom
 
     }
 
+    // Before stop, the server should send all bytes
+    // in the output buffer of each connection. 
     void TcpServer::
     stop()
     {   
@@ -45,9 +51,7 @@ namespace chatRoom
     void TcpServer::
     ConnectionEstablished(int connfd, NetAddress& peerAddr)
     {
-        TcpConnection conn(connfd,
-                    this->localAddr_,
-                    peerAddr);
+        TcpConnection conn(connfd,this->localAddr_,peerAddr);
         conn.setConnClosedCallback(
             std::bind(&TcpServer::ConnectionClosed,this,_1)
         );
@@ -57,6 +61,9 @@ namespace chatRoom
         // conn.setSendCallback(
         //     std::bind(&TcpServer::)
         // );
+
+        // If client has shutdowned on write, the connfd is always
+        // ready for read. 
         poller_.updateChannel(conn.getChannelPtr());
 
         {
@@ -72,7 +79,9 @@ namespace chatRoom
     MsgReceived(const char* first, size_t len)
     {
         if(onReceivedCallback_)
-            onReceivedCallback_(first, len); 
+            threadPool_.enqueue(
+                std::bind(onReceivedCallback_,first, len)
+            ); 
     }
 
     void TcpServer::
@@ -103,6 +112,8 @@ namespace chatRoom
             conns_.erase(conn->getSelfPtr());
         }
         if(onClosedCallback_)
-            onClosedCallback_(conn);
+            threadPool_.enqueue(
+                std::bind(onClosedCallback_,conn)
+            );
     }
 } // namespace chatRoom

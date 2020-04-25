@@ -37,8 +37,7 @@ namespace chatRoom
             void start();
 
             void stop();
-
-            void send(TcpConnection& conn, std::string& msg);
+         
 
         private:
             NetAddress localAddr_;

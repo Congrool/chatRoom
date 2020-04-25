@@ -68,7 +68,9 @@ namespace chatRoom
             coutErrorLog << "accpet Error" << std::endl;
         }
         sockaddr_in* peeraddrPtr = (sockaddr_in*)(&peeraddr);
-        memcpy(peerAddrRet,peeraddrPtr,static_cast<size_t>(addrlen));
+        if(peerAddrRet != nullptr)
+            memcpy(peerAddrRet,
+                peeraddrPtr,static_cast<size_t>(addrlen));
         return connfd;
     }
 
@@ -87,6 +89,13 @@ namespace chatRoom
         if(::shutdown(sockfd_,SHUT_WR) < 0)
         {
             coutErrorLog << "socket::shutdownWrite error";
+        }
+    }
+
+    void Socket::shutdownRead(){
+        if(::shutdown(sockfd_,SHUT_RD) < 0)
+        {
+            coutErrorLog << "socket::shutdownRead error";
         }
     }
 

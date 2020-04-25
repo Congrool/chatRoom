@@ -67,7 +67,6 @@ namespace chatRoom
 
         private:
             Socket connfd_;
-            Channel connChannel_;
             ChannelPtr connChannelPtr_;
             
             Buffer inputBuffer;

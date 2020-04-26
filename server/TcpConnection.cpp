@@ -14,7 +14,7 @@ namespace chatRoom
     closed_(false),
     localAddr_(local),
     peerAddr_(peer),
-    selfPtr(std::move(std::make_shared<TcpConnection>(*this)))
+    id_(-1)
     {
         connChannelPtr_->setWriteEventCallback(
             std::bind(&TcpConnection::handleWrite,this)
@@ -84,7 +84,7 @@ namespace chatRoom
             connChannelPtr_->disableWriting();
             connfd_.shutdownWrite();
             if(connClosedCallback_)
-                connClosedCallback_(selfPtr);
+                connClosedCallback_(*this);
         }
         else{
             size_t hasWrite = outputBuffer.write(connfd_.fd());
@@ -100,6 +100,6 @@ namespace chatRoom
         connfd_.shutdownWrite();
         connChannelPtr_->disableAll();
         if(connClosedCallback_)
-            connClosedCallback_(selfPtr);
+            connClosedCallback_(*this);
     }
 } // namespace chatRoom

@@ -21,11 +21,11 @@ namespace chatRoom
      */
     class TcpConnection{
         public:
-            typedef std::shared_ptr<TcpConnection>          pointer;
+            typedef TcpConnection*                          pointer;
             typedef std::function<void(std::string&)>       sendCallbackFunc;
             typedef std::function<
                     void(const char* first,size_t len)>     receiveCallbackFunc;
-            typedef std::function<void(pointer&)>           connClosedCallbackFunc;
+            typedef std::function<void(TcpConnection&)>     connClosedCallbackFunc;
             typedef Buffer::size_t                          size_t;
             // using fd returned by accept() as the argument
             explicit
@@ -65,8 +65,11 @@ namespace chatRoom
             const ChannelPtr& getChannelPtr()
             { return connChannelPtr_; }
 
-            const pointer& getSelfPtr() const
-            { return selfPtr; }
+            void setId(int id)
+            { assert(id_ == -1); id_ = id; }
+
+            const int getId() const
+            { return id_; }
 
         private:
             Socket connfd_;
@@ -84,9 +87,9 @@ namespace chatRoom
             receiveCallbackFunc receiveCallback_;
             connClosedCallbackFunc connClosedCallback_;
 
-            pointer selfPtr;
-
             void closeConn();
+
+            int id_;
     };
 
     typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;

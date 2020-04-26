@@ -29,7 +29,7 @@ namespace chatRoom
             typedef TcpConnection::receiveCallbackFunc      receiveCallbackFunc;
             typedef TcpConnection::sendCallbackFunc         sendCallbackFunc;
             typedef std::function<void()>                   connEstablishedFunc;
-            typedef std::set<TcpConnectionPtr>              ConnContainer;
+            typedef std::map<int,TcpConnectionPtr>          ConnContainer;
 
             TcpServer(uint16_t portNum, int numOfThreads);
 
@@ -80,7 +80,7 @@ namespace chatRoom
             MsgReceived(const char* first, size_t len);
 
             void
-            ConnectionClosed(TcpConnectionPtr& conn);
+            ConnectionClosed(TcpConnection& conn);
 
             // void
             // MsgSent();

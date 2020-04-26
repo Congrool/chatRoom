@@ -59,7 +59,7 @@ namespace chatRoom
         }
         poller_.stop();
         for(auto& it:conns_)
-            it->forceToClose();
+            it.second->forceToClose();
     }
     
     
@@ -68,6 +68,10 @@ namespace chatRoom
     {
         auto connPtr = std::make_shared<TcpConnection>(
                 connfd,this->localAddr_,peerAddr);
+        {
+            mutexGuard lock(mutex_);
+            connPtr->setId(conns_.size());
+        }
         connPtr->setConnClosedCallback(
             std::bind(&TcpServer::ConnectionClosed,this,_1)
         );
@@ -86,7 +90,7 @@ namespace chatRoom
 
         {
             mutexGuard lockGuard(mutex_);
-            conns_.insert(connPtr);
+            conns_.insert({conns_.size(),std::move(connPtr)});
         }
         
         if(onConnectionCallback_)
@@ -122,12 +126,12 @@ namespace chatRoom
     }
 
     void TcpServer::
-    ConnectionClosed(TcpConnectionPtr& conn)
+    ConnectionClosed(TcpConnection& conn)
     {
-        poller_.removeChannel(conn->getChannelPtr());
+        poller_.removeChannel(conn.getChannelPtr());
         {
             mutexGuard lockGuard(mutex_);
-            conns_.erase(conn);
+            conns_.erase(conn.getId());
         }
         if(onConnClosedCallback_)
             threadPool_.enqueue(

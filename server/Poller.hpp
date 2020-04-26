@@ -27,7 +27,7 @@ namespace chatRoom
 			// timeout indicating the maximum time poll() can block.
 			// ChannelList used to return ready Channels.
 			// It's multithread safe.
-			void poll(int timeout, ChannelList&);
+			ChannelList poll(int timeout);
 
 			// FIXME: started_ may be in the critical region
 			// and should be protected by a lockguard when modified.

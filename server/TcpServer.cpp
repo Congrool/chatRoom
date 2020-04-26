@@ -5,7 +5,7 @@ namespace chatRoom
     TcpServer::TcpServer(uint16_t portNum,int numOfThreads)
     : localAddr_(portNum),
     localSock_(::socket(localAddr_.family(), SOCK_STREAM, 0)),
-    threadPool_(numOfThreads),
+    threadPool_(1),
     poller_(),
     acceptor_(localSock_.fd(),localAddr_),
     mutex_(),
@@ -28,14 +28,22 @@ namespace chatRoom
         assert(started_ == false);
         started_ = true;
         acceptor_.listen();
+        poller_.start();
         poller_.updateChannel(acceptor_.getChannelPtr());
         // acceptor_::handleRead will call ::accept()
+
         threadPool_.start();
         // set one Poller thread
-        threadPool_.enqueue(
-            std::bind(&TcpServer::defaultPollThreadLoop,this)
-        );
+        // threadPool_.enqueue(
+            // std::bind(&TcpServer::defaultPollThreadLoop,this)
+        // );
 
+    }
+
+    void TcpServer::
+    loop()
+    {
+        defaultPollThreadLoop();
     }
     
     // FIXME:
@@ -58,24 +66,27 @@ namespace chatRoom
     void TcpServer::
     ConnectionEstablished(int connfd, NetAddress& peerAddr)
     {
-        TcpConnection conn(connfd,this->localAddr_,peerAddr);
-        conn.setConnClosedCallback(
+        auto connPtr = std::make_shared<TcpConnection>(
+                connfd,this->localAddr_,peerAddr);
+        connPtr->setConnClosedCallback(
             std::bind(&TcpServer::ConnectionClosed,this,_1)
         );
-        conn.setReceiveCallback(
+        connPtr->setReceiveCallback(
             std::bind(&TcpServer::MsgReceived,this,_1,_2)
         );
+        //FIXME:
+        // add SendCallback
         // conn.setSendCallback(
         //     std::bind(&TcpServer::)
         // );
 
         // If client has shutdowned on write, the connfd is always
         // ready for read. 
-        poller_.updateChannel(conn.getChannelPtr());
+        poller_.updateChannel(connPtr->getChannelPtr());
 
         {
             mutexGuard lockGuard(mutex_);
-            conns_.insert(conn.getSelfPtr());
+            conns_.insert(connPtr);
         }
         
         if(onConnectionCallback_)
@@ -99,14 +110,14 @@ namespace chatRoom
             // It's uneffecitive.
             // Because it's only one poll thread active 
             // at the same time.
-            mutexGuard locGurad(mutex_);
-            poller_.poll(0,activeChannelList);
-            for(auto& it:activeChannelList)
+            ChannelList activeList = poller_.poll(-1);
             {
-                threadPool_.enqueue(&Channel::handleEvent,it.get());
+                mutexGuard lock(mutex_);
+                for(auto& it: activeList)
+                {
+                    threadPool_.enqueue(&Channel::handleEvent,it.get());
+                }
             }
-            
-            activeChannelList.clear();
         }
     }
 
@@ -116,7 +127,7 @@ namespace chatRoom
         poller_.removeChannel(conn->getChannelPtr());
         {
             mutexGuard lockGuard(mutex_);
-            conns_.erase(conn->getSelfPtr());
+            conns_.erase(conn);
         }
         if(onConnClosedCallback_)
             threadPool_.enqueue(

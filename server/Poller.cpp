@@ -55,7 +55,7 @@ namespace chatRoom
             return;
         assert(channelMaps_[channel->fd()] == channel);
         assert(0 <= channel->index() 
-            && channel->index() < static_cast<int>(pollfds_.size())-1);
+            && channel->index() < static_cast<int>(pollfds_.size()));
         assert(pollfds_[channel->index()].fd == channel->fd()
             || pollfds_[channel->index()].fd == -channel->fd()-1);
         // When should the erase fail?
@@ -77,8 +77,9 @@ namespace chatRoom
         }
     }
 
-    void Poller::poll(int timeout, ChannelList& list){
+    Poller::ChannelList Poller::poll(int timeout){
         int ret,savedError;
+        ChannelList list;
         {
             mutexGuard lockGuard(mutex_);
             assert(started_ == true);
@@ -117,6 +118,7 @@ namespace chatRoom
                 coutErrorLog << "poll error: ENOMEM";
             // Other errors are impossible, I think.
         }
+        return list;
     }
 
     void Poller::start() 

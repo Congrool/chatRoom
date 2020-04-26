@@ -25,8 +25,8 @@ namespace chatRoom
             typedef std::function<void(std::string&)>       sendCallbackFunc;
             typedef std::function<
                     void(const char* first,size_t len)>     receiveCallbackFunc;
-            typedef std::function<void(pointer&)>   connClosedCallbackFunc;
-            typedef Buffer::size_t size_t;
+            typedef std::function<void(pointer&)>           connClosedCallbackFunc;
+            typedef Buffer::size_t                          size_t;
             // using fd returned by accept() as the argument
             explicit
             TcpConnection(int connfd,

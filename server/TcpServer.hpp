@@ -29,14 +29,17 @@ namespace chatRoom
             typedef TcpConnection::receiveCallbackFunc      receiveCallbackFunc;
             typedef TcpConnection::sendCallbackFunc         sendCallbackFunc;
             typedef std::function<void()>                   connEstablishedFunc;
-            
             typedef std::set<TcpConnectionPtr>              ConnContainer;
 
             TcpServer(uint16_t portNum, int numOfThreads);
+
             ~TcpServer();
+            
             void start();
 
             void stop();
+
+            void loop();
 
             ConnContainer& getConnList()
             { return conns_;}
@@ -53,6 +56,7 @@ namespace chatRoom
             void setOnConnectionCallback(connEstablishedFunc func)
             { onConnectionCallback_ = func; }
 
+
         private:
             NetAddress localAddr_;
             Socket localSock_;
@@ -63,8 +67,6 @@ namespace chatRoom
             Mutex mutex_;
 
             bool started_;
-
-            ChannelList activeChannelList;
 
             connClosedCallbackFunc  onConnClosedCallback_;
             receiveCallbackFunc     onReceivedCallback_;

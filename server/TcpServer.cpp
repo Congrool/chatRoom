@@ -112,8 +112,8 @@ namespace chatRoom
         while(poller_.hasStarted()){
             // FIXME:
             // It's uneffecitive.
-            // Because it's only one poll thread active 
-            // at the same time.
+            // Because there's only one poll thread active 
+            // at a time.
             ChannelList activeList = poller_.poll(-1);
             {
                 mutexGuard lock(mutex_);

@@ -11,7 +11,7 @@ namespace chatRoom
     connChannelPtr_(std::make_shared<Channel>(connfd)),
     inputBuffer(),
     outputBuffer(),
-    closed_(false),
+    state_(connected_),
     localAddr_(local),
     peerAddr_(peer),
     id_(-1)
@@ -27,7 +27,7 @@ namespace chatRoom
     }
 
     TcpConnection::~TcpConnection(){
-        assert(closed_);
+        assert(state_ == hasClosed_);
         assert(connChannelPtr_->isNonevent());
     }
 
@@ -42,64 +42,76 @@ namespace chatRoom
     // If peer client has shutdown on write, the channel
     // is always ready for read, and hasRead is 0.
     void TcpConnection::handleRead(){
-        int hasRead = inputBuffer.read(connfd_.fd());
-        if(hasRead > 0)
-        {
+        if(state_ == connected_){
+            int hasRead = inputBuffer.read(connfd_.fd());
+            if(hasRead > 0)
+            {
 
-            if(receiveCallback_)
-                receiveCallback_(
-                    inputBuffer.readStart(),
-                    inputBuffer.readableSize()
-                );
-        }
-        else if(hasRead == 0)
-        {
-            closed_ = true;
-            closeConn();
-        }
-        else // hasRead < 0, handle Error
-        {
-            // do nothing
-        }
-    }
-
-    void TcpConnection::closeConn()
-    {
-        if(closed_){
-            if(inputBuffer.readableSize() == 0)
-                connChannelPtr_->disableReading();         
-            else{
                 if(receiveCallback_)
                     receiveCallback_(
                         inputBuffer.readStart(),
                         inputBuffer.readableSize()
                     );
-            } 
-         }
-    }
-    
-
-    void TcpConnection::handleWrite(){
-        if(closed_ && outputBuffer.readableSize() == 0){         
-            connChannelPtr_->disableWriting();
-            connfd_.shutdownWrite();
-            if(connClosedCallback_)
-                connClosedCallback_(*this);
-        }
-        else{
-            size_t hasWrite = outputBuffer.write(connfd_.fd());
-            if(sendCallback_){
-                std::string str(outputBuffer.readStart(),hasWrite);
-                sendCallback_(str);
+            }
+            else if(hasRead == 0)
+            {
+                state_ = closing_;
+                connChannelPtr_->disableReading();
+                tryCloseConn();
+            }
+            else // hasRead < 0, handle Error
+            {
+                // do nothing
             }
         }
+        else
+            tryCloseConn();
+    }
+    
+    void TcpConnection::handleWrite(){
+        if(state_ == connected_){
+            writeDataAndCallback();         
+        }
+        else
+            tryCloseConn();
     }
 
     void TcpConnection::forceToClose(){
-        closed_ = true;
+        state_ = hasClosed_;
         connfd_.shutdownWrite();
         connChannelPtr_->disableAll();
         if(connClosedCallback_)
             connClosedCallback_(*this);
+    }
+
+    void TcpConnection::tryCloseConn()
+    {
+        assert(state_ == closing_);
+        if(connChannelPtr_->isNonevent() && connClosedCallback_){
+            state_ = hasClosed_;
+            connClosedCallback_(*this);
+            return;
+        }
+        if(inputBuffer.readableSize() && receiveCallback_)
+            receiveCallback_(
+                inputBuffer.readStart(),
+                inputBuffer.readableSize()
+            );
+
+        if(outputBuffer.readableSize() == 0){
+            connChannelPtr_->disableWriting();
+            connfd_.shutdownWrite();
+        }
+        else{
+            writeDataAndCallback();
+        }
+    }
+    
+    void TcpConnection::writeDataAndCallback(){
+        size_t hasWrite = outputBuffer.write(connfd_.fd());
+        if(sendCallback_){
+            std::string str(outputBuffer.readStart(),hasWrite);
+            sendCallback_(str);
+        }
     }
 } // namespace chatRoom

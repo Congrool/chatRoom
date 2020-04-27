@@ -78,8 +78,14 @@ namespace chatRoom
             Buffer inputBuffer;
             Buffer outputBuffer;
 
-            bool closed_;
+            enum connState{
+                connected_ = 0,
+                closing_ = 1,
+                hasClosed_ = 2
+            };
 
+            connState state_;
+            
             const NetAddress& localAddr_;
             const NetAddress& peerAddr_; 
 
@@ -87,7 +93,9 @@ namespace chatRoom
             receiveCallbackFunc receiveCallback_;
             connClosedCallbackFunc connClosedCallback_;
 
-            void closeConn();
+            void tryCloseConn();
+
+            void writeDataAndCallback();
 
             int id_;
     };

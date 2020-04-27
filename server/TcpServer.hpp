@@ -25,7 +25,7 @@ namespace chatRoom
     {
         public:
             typedef Poller::ChannelList ChannelList;
-            typedef TcpConnection::connClosedCallbackFunc   connClosedCallbackFunc;
+            typedef std::function<void(int)>                connClosedCallbackFunc;
             typedef TcpConnection::receiveCallbackFunc      receiveCallbackFunc;
             typedef TcpConnection::sendCallbackFunc         sendCallbackFunc;
             typedef std::function<void()>                   connEstablishedFunc;
@@ -56,7 +56,6 @@ namespace chatRoom
             void setOnConnectionCallback(connEstablishedFunc func)
             { onConnectionCallback_ = func; }
 
-
         private:
             NetAddress localAddr_;
             Socket localSock_;
@@ -67,23 +66,48 @@ namespace chatRoom
             Mutex mutex_;
 
             bool started_;
-
+            
+            /**
+             * Tasks commpleted by TcpServer before doing 
+             * onConnClosedCallback_ is removing channels from
+             * poller and current connection from conns_.
+             */
             connClosedCallbackFunc  onConnClosedCallback_;
+            /**
+             * Tasks commpleted before doing onReceivedCallback_
+             * by TcpServer is telling the above
+             * layer that messages has been received and stored
+             * in the connection buffer but does nothing.
+             * @param   first   the start addr of buffer
+             * @param   len     the length of received messages in buffer
+             */
             receiveCallbackFunc     onReceivedCallback_;
+
+            /**
+             * Tasks commpleted by TcpServer before doing
+             * onSendCallback is putting the messages
+             * to send in the connection's output buffer.
+             */
             sendCallbackFunc        onSendCallback_;
+
+            /**
+             * Tasks commpleted by TcpServer before doing
+             * onConnectionCallback_is inserting new channels
+             * in poller and new connection in conns_.
+             */
             connEstablishedFunc     onConnectionCallback_;
 
             void
             ConnectionEstablished(int connfd, NetAddress&);
 
             void
-            MsgReceived(const char* first, size_t len);
+            MsgReceived(TcpConnection& conn);
 
             void
             ConnectionClosed(TcpConnection& conn);
 
-            // void
-            // MsgSent();
+            void
+            MsgSent(std::string& msg);
 
             void 
             defaultPollThreadLoop();

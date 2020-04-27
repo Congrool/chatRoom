@@ -76,13 +76,11 @@ namespace chatRoom
             std::bind(&TcpServer::ConnectionClosed,this,_1)
         );
         connPtr->setReceiveCallback(
-            std::bind(&TcpServer::MsgReceived,this,_1,_2)
+            std::bind(&TcpServer::MsgReceived,this,_1)
         );
-        //FIXME:
-        // add SendCallback
-        // conn.setSendCallback(
-        //     std::bind(&TcpServer::)
-        // );
+        connPtr->setSendCallback(
+            std::bind(&TcpServer::MsgSent,this,_1)
+        );
 
         // If client has shutdowned on write, the connfd is always
         // ready for read. 
@@ -98,12 +96,21 @@ namespace chatRoom
     }
 
     void TcpServer::
-    MsgReceived(const char* first, size_t len)
+    MsgReceived(TcpConnection& conn)
     {
         if(onReceivedCallback_)
             threadPool_.enqueue(
-                std::bind(onReceivedCallback_,first, len)
+                std::bind(onReceivedCallback_,conn)
             ); 
+    }
+
+    void TcpServer::
+    MsgSent(std::string& msg)
+    {
+        if(onSendCallback_)
+            threadPool_.enqueue(
+                std::bind(onSendCallback_,msg)
+            );
     }
 
     void TcpServer::
@@ -135,7 +142,7 @@ namespace chatRoom
         }
         if(onConnClosedCallback_)
             threadPool_.enqueue(
-                std::bind(onConnClosedCallback_,conn)
+                std::bind(onConnClosedCallback_,conn.getId())
             );
     }
 } // namespace chatRoom

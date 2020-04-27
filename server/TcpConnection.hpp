@@ -18,13 +18,15 @@ namespace chatRoom
      * Both sides can suppose that the message it sends will
      * be received by another side, and never be dropped 
      * because of the TcpConnection class.
+     * 
+     * Using '\0' as the separation character of TcpConnection
+     * layer.
      */
     class TcpConnection{
         public:
             typedef TcpConnection*                          pointer;
             typedef std::function<void(std::string&)>       sendCallbackFunc;
-            typedef std::function<
-                    void(const char* first,size_t len)>     receiveCallbackFunc;
+            typedef std::function<void(TcpConnection&)>     receiveCallbackFunc;
             typedef std::function<void(TcpConnection&)>     connClosedCallbackFunc;
             typedef Buffer::size_t                          size_t;
             // using fd returned by accept() as the argument
@@ -70,6 +72,12 @@ namespace chatRoom
 
             const int getId() const
             { return id_; }
+
+            // If there's not a whole message in the buffer
+            // return -1;
+            // else
+            // return 0;
+            int getMessage(std::string&);
 
         private:
             Socket connfd_;

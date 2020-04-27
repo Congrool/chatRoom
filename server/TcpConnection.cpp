@@ -1,6 +1,7 @@
 #include "server/TcpConnection.hpp"
 
 #include <assert.h>
+#include <algorithm>
 
 namespace chatRoom
 {
@@ -36,7 +37,19 @@ namespace chatRoom
     }
 
     void TcpConnection::send(std::string& msg){
+        msg += '\0';
         send(msg.begin().base(), msg.length());
+    }
+
+    int TcpConnection::getMessage(std::string& msg){
+        auto start_ = inputBuffer.readStart();
+        auto len = inputBuffer.readableSize();
+        auto end_ = start_ + len;
+        auto pos_ = std::search_n(start_, end_ ,1,'\0');
+        if(pos_ > end_) return -1;
+        msg = std::move(std::string((start_,pos_)));
+        inputBuffer.retrieveLen(sizeof(msg)+1);
+        return 0;
     }
 
     // If peer client has shutdown on write, the channel
@@ -48,10 +61,7 @@ namespace chatRoom
             {
 
                 if(receiveCallback_)
-                    receiveCallback_(
-                        inputBuffer.readStart(),
-                        inputBuffer.readableSize()
-                    );
+                    receiveCallback_(*this);
             }
             else if(hasRead == 0)
             {
@@ -93,10 +103,7 @@ namespace chatRoom
             return;
         }
         if(inputBuffer.readableSize() && receiveCallback_)
-            receiveCallback_(
-                inputBuffer.readStart(),
-                inputBuffer.readableSize()
-            );
+            receiveCallback_(*this);
 
         if(outputBuffer.readableSize() == 0){
             connChannelPtr_->disableWriting();

@@ -46,9 +46,10 @@ namespace chatRoom
         auto len = inputBuffer.readableSize();
         auto end_ = start_ + len;
         auto pos_ = std::search_n(start_, end_ ,1,'\0');
-        if(pos_ > end_) return -1;
-        msg = std::move(std::string((start_,pos_)));
-        inputBuffer.retrieveLen(sizeof(msg)+1);
+        if(pos_ >= end_) return -1;
+        std::string tmp(start_,pos_);
+        msg = std::move(tmp);
+        inputBuffer.retrieveLen(pos_-start_+1);
         return 0;
     }
 
@@ -61,7 +62,7 @@ namespace chatRoom
             {
 
                 if(receiveCallback_)
-                    receiveCallback_(*this);
+                    receiveCallback_(shared_from_this());
             }
             else if(hasRead == 0)
             {
@@ -91,7 +92,7 @@ namespace chatRoom
         connfd_.shutdownWrite();
         connChannelPtr_->disableAll();
         if(connClosedCallback_)
-            connClosedCallback_(*this);
+            connClosedCallback_(shared_from_this());
     }
 
     void TcpConnection::tryCloseConn()
@@ -99,11 +100,11 @@ namespace chatRoom
         assert(state_ == closing_);
         if(connChannelPtr_->isNonevent() && connClosedCallback_){
             state_ = hasClosed_;
-            connClosedCallback_(*this);
+            connClosedCallback_(shared_from_this());
             return;
         }
         if(inputBuffer.readableSize() && receiveCallback_)
-            receiveCallback_(*this);
+            receiveCallback_(shared_from_this());
 
         if(outputBuffer.readableSize() == 0){
             connChannelPtr_->disableWriting();

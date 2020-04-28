@@ -14,6 +14,10 @@ namespace chatRoom
         );
     }
 
+    ChatRoomServer::~ChatRoomServer(){
+        server_.stop();
+    }
+
     void ChatRoomServer::start(){
         server_.start();
     }
@@ -30,11 +34,11 @@ namespace chatRoom
         }
     }
 
-    void ChatRoomServer::onReceive(TcpConnection& conn){
+    void ChatRoomServer::onReceive(TcpConnectionPtr conn){
         std::string msg;
-        if(conn.getMessage(msg) == 0){
+        if(conn->getMessage(msg) == 0){
             for(auto& it : conns_)
-                if(it.second->getId() != conn.getId())
+                if(it.second->getId() != conn->getId())
                     it.second->send(msg);
         }
     }

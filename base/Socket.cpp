@@ -43,12 +43,28 @@ namespace chatRoom
     }
 
     void Socket::bind(NetAddress& addr){
-        if(::bind(sockfd_,
+        int ret = -1;
+        if((ret = ::bind(sockfd_,
             (const struct sockaddr*)addr.getAddr(),
-            static_cast<socklen_t>(sizeof(sockaddr_in)))
+            static_cast<socklen_t>(sizeof(sockaddr_in))))
             < 0)
         {
-            coutErrorLog << "bind error" << std::endl;
+            coutErrorLog << "bind error ";
+            switch(ret){
+                case EACCES: coutErrorLog << "EACCES"; break;
+                case EADDRINUSE: coutErrorLog << "EADDRINUSE"; break;
+                case EBADF: coutErrorLog << "EBADF"; break;
+                case EINVAL: coutErrorLog << "EINVAL"; break;
+                case ENOTSOCK: coutErrorLog << "ENOTSOCK"; break;
+                case EADDRNOTAVAIL: coutErrorLog << "EADDRNOTAVAIL"; break;
+                case EFAULT: coutErrorLog << "EFAULT"; break;
+                case ELOOP: coutErrorLog << "ELOOP"; break;
+                case ENAMETOOLONG:coutErrorLog << "ENAMETOOLONG"; break;
+                case ENOENT:coutErrorLog << "ENOENT"; break;
+                case ENOMEM:coutErrorLog << "ENOMEM"; break;
+                case ENOTDIR:coutErrorLog << "ENOTDIR"; break;
+                case EROFS:coutErrorLog << "EROFS"; break;
+            }
         }
     }
 

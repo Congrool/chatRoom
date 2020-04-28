@@ -22,12 +22,15 @@ namespace chatRoom
      * Using '\0' as the separation character of TcpConnection
      * layer.
      */
-    class TcpConnection{
+
+    // Take cause that it's public inheritance.
+    // Otherwise, it will throw bad_weak_ptr error.
+    class TcpConnection : public std::enable_shared_from_this<TcpConnection>{
         public:
-            typedef TcpConnection*                          pointer;
+            typedef std::shared_ptr<TcpConnection>          pointer;
             typedef std::function<void(std::string&)>       sendCallbackFunc;
-            typedef std::function<void(TcpConnection&)>     receiveCallbackFunc;
-            typedef std::function<void(TcpConnection&)>     connClosedCallbackFunc;
+            typedef std::function<void(pointer)>            receiveCallbackFunc;
+            typedef std::function<void(pointer)>            connClosedCallbackFunc;
             typedef Buffer::size_t                          size_t;
             // using fd returned by accept() as the argument
             explicit

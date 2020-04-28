@@ -68,10 +68,6 @@ namespace chatRoom
     {
         auto connPtr = std::make_shared<TcpConnection>(
                 connfd,this->localAddr_,peerAddr);
-        {
-            mutexGuard lock(mutex_);
-            connPtr->setId(conns_.size());
-        }
         connPtr->setConnClosedCallback(
             std::bind(&TcpServer::ConnectionClosed,this,_1)
         );
@@ -88,7 +84,8 @@ namespace chatRoom
 
         {
             mutexGuard lockGuard(mutex_);
-            conns_.insert({conns_.size(),std::move(connPtr)});
+            connPtr->setId(conns_.size());
+            conns_[connPtr->getId()] = connPtr;
         }
         
         if(onConnectionCallback_)
@@ -96,12 +93,14 @@ namespace chatRoom
     }
 
     void TcpServer::
-    MsgReceived(TcpConnection& conn)
+    MsgReceived(TcpConnectionPtr conn)
     {
+        
         if(onReceivedCallback_)
-            threadPool_.enqueue(
-                std::bind(onReceivedCallback_,conn)
-            ); 
+            threadPool_.enqueue(onReceivedCallback_,conn); 
+        else{
+            coutErrorLog << "onReceivedCallback_ is NULL";
+        }
     }
 
     void TcpServer::
@@ -118,10 +117,13 @@ namespace chatRoom
     {
         while(poller_.hasStarted()){
             // FIXME:
-            // It's uneffecitive.
-            // Because there's only one poll thread active 
-            // at a time.
-            ChannelList activeList = poller_.poll(-1);
+            // Race condition!
+            // When a channel is handling its event, the event is
+            // still in the poller list, which means that the channel
+            // will appear in the activeList again with the same 
+            // event to handle and ask another thread to do it.
+            // Then, race condition occurs.  
+            ChannelList activeList = poller_.poll(500);
             {
                 mutexGuard lock(mutex_);
                 for(auto& it: activeList)
@@ -133,16 +135,16 @@ namespace chatRoom
     }
 
     void TcpServer::
-    ConnectionClosed(TcpConnection& conn)
+    ConnectionClosed(TcpConnectionPtr conn)
     {
-        poller_.removeChannel(conn.getChannelPtr());
+        poller_.removeChannel(conn->getChannelPtr());
         {
             mutexGuard lockGuard(mutex_);
-            conns_.erase(conn.getId());
+            conns_.erase(conn->getId());
         }
         if(onConnClosedCallback_)
             threadPool_.enqueue(
-                std::bind(onConnClosedCallback_,conn.getId())
+                onConnClosedCallback_,conn->getId()
             );
     }
 } // namespace chatRoom

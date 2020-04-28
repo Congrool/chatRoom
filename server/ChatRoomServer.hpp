@@ -28,7 +28,7 @@ namespace chatRoom
 
             void onConnClosed(int closedConnId);
 
-            void onReceive(TcpConnection& conn);
+            void onReceive(TcpConnectionPtr conn);
 
 
     };

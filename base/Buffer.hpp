@@ -10,6 +10,11 @@ namespace chatRoom
 {
 	// Used as user buffer
 
+	// FIXME:
+	// We should reorganize the buffer, 
+	// when readableStart is vary large.
+	// It exhausts the memory.
+
   	class Buffer 
 	{
 		public:
@@ -27,6 +32,9 @@ namespace chatRoom
 			size_t write(int fd);
 
 			void append(char* buff, size_t len);
+
+			void append(char ch)
+			{ buffer_.emplace_back(ch); }
 
 			void retrieveAll();
 

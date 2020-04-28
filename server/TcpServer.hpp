@@ -1,6 +1,7 @@
 #ifndef CHATROOM_SERVER_TCPSERVER_HPP
 #define CHATROOM_SERVER_TCPSERVER_HPP 0
 
+#include "base/ErrorLog.hpp"
 #include "server/Acceptor.hpp"
 #include "server/Poller.hpp"
 #include "server/TcpConnection.hpp"
@@ -13,6 +14,8 @@ namespace chatRoom
     #define _1 std::placeholders::_1
     #define _2 std::placeholders::_2
     #define _3 std::placeholders::_3
+
+    extern ErrorLog coutErrorLog;
 
     // what TcpServer should manage are as follows:
     // 1. onConnection: what to do when a new 
@@ -78,8 +81,6 @@ namespace chatRoom
              * by TcpServer is telling the above
              * layer that messages has been received and stored
              * in the connection buffer but does nothing.
-             * @param   first   the start addr of buffer
-             * @param   len     the length of received messages in buffer
              */
             receiveCallbackFunc     onReceivedCallback_;
 
@@ -101,10 +102,10 @@ namespace chatRoom
             ConnectionEstablished(int connfd, NetAddress&);
 
             void
-            MsgReceived(TcpConnection& conn);
+            MsgReceived(TcpConnectionPtr conn);
 
             void
-            ConnectionClosed(TcpConnection& conn);
+            ConnectionClosed(TcpConnectionPtr conn);
 
             void
             MsgSent(std::string& msg);

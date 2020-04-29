@@ -3,7 +3,7 @@
 namespace chatRoom
 {
     ChatRoomServer::ChatRoomServer()
-    :server_(ServerPort,0),
+    :server_(ServerPort,6),
     conns_(server_.getConnList())
     { 
         server_.setOnConnClosedCallback(
@@ -27,10 +27,11 @@ namespace chatRoom
     }
 
     void ChatRoomServer::onConnClosed(int closedConnId){
-        std::string msg;
-        msg += "Msg: "; msg += closedConnId; msg += " has left.";
+        char buf[64];
+        snprintf(buf,64,"Msg: %d has left.",closedConnId);
+        auto len = strlen(buf);
         for(auto& it : conns_){
-            it.second->send(msg);
+            it.second->send(buf,len);
         }
     }
 
@@ -38,7 +39,8 @@ namespace chatRoom
         std::string msg;
         if(conn->getMessage(msg) == 0){
             for(auto& it : conns_)
-                if(it.second->getId() != conn->getId())
+                if(it.second->getId() != conn->getId() &&
+                    it.second->isOnline())
                     it.second->send(msg);
         }
     }

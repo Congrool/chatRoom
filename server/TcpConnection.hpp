@@ -21,6 +21,9 @@ namespace chatRoom
      * 
      * Using '\0' as the separation character of TcpConnection
      * layer.
+     * 
+     * TcpConnection is almost visited by a signal thread
+     * at a time, except inputBuffer and outputBuffer.
      */
 
     // Take cause that it's public inheritance.
@@ -76,6 +79,9 @@ namespace chatRoom
             const int getId() const
             { return id_; }
 
+            bool isOnline() const
+            { return state_ == connected_; }
+
             // If there's not a whole message in the buffer
             // return -1;
             // else
@@ -100,9 +106,12 @@ namespace chatRoom
             const NetAddress& localAddr_;
             const NetAddress& peerAddr_; 
 
+            // The following three callbacks is multithread.
             sendCallbackFunc sendCallback_;
             receiveCallbackFunc receiveCallback_;
             connClosedCallbackFunc connClosedCallback_;
+
+            Mutex   mutex_;
 
             void tryCloseConn();
 

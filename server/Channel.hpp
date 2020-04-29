@@ -47,10 +47,16 @@ namespace chatRoom
 
 			bool isNonevent() { return events_ == noneEvent; }
 
+			bool isHandling() { return isHandling_; }
+
+			bool setHandling(bool on) { isHandling_ = on; }
+
 		private:
 			const int sockfd_;
 			int events_;
 			int revents_;
+
+			bool isHandling_;
 			
 			// It's used in poll class,
 			// indicating the index of concerning pollfd

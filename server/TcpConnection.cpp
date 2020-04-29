@@ -32,8 +32,10 @@ namespace chatRoom
         assert(connChannelPtr_->isNonevent());
     }
 
-    void TcpConnection::send(char* buff, size_t len){
-        outputBuffer.append(buff, len);
+    void TcpConnection::send(char* buff, size_t len){ 
+        mutexGuard lock(mutex_);
+        assert(state_ == connected_);
+        outputBuffer.append(buff, len);     
     }
 
     void TcpConnection::send(std::string& msg){
@@ -42,14 +44,16 @@ namespace chatRoom
     }
 
     int TcpConnection::getMessage(std::string& msg){
+        mutexGuard lock(mutex_);
+        assert(connected_ != hasClosed_);
         auto start_ = inputBuffer.readStart();
         auto len = inputBuffer.readableSize();
         auto end_ = start_ + len;
         auto pos_ = std::search_n(start_, end_ ,1,'\0');
         if(pos_ >= end_) return -1;
+        inputBuffer.retrieveLen(pos_-start_+1);
         std::string tmp(start_,pos_);
         msg = std::move(tmp);
-        inputBuffer.retrieveLen(pos_-start_+1);
         return 0;
     }
 
@@ -57,7 +61,11 @@ namespace chatRoom
     // is always ready for read, and hasRead is 0.
     void TcpConnection::handleRead(){
         if(state_ == connected_){
-            int hasRead = inputBuffer.read(connfd_.fd());
+            int hasRead = -1;
+            {
+                mutexGuard lock(mutex_);
+                hasRead = inputBuffer.read(connfd_.fd());
+            }
             if(hasRead > 0)
             {
 
@@ -116,6 +124,7 @@ namespace chatRoom
     }
     
     void TcpConnection::writeDataAndCallback(){
+        if(outputBuffer.readableSize() == 0) return;
         size_t hasWrite = outputBuffer.write(connfd_.fd());
         if(sendCallback_){
             std::string str(outputBuffer.readStart(),hasWrite);

@@ -5,7 +5,7 @@ namespace chatRoom
     TcpServer::TcpServer(uint16_t portNum,int numOfThreads)
     : localAddr_(portNum),
     localSock_(::socket(localAddr_.family(), SOCK_STREAM, 0)),
-    threadPool_(1),
+    threadPool_(numOfThreads),
     poller_(),
     acceptor_(localSock_.fd(),localAddr_),
     mutex_(),
@@ -30,14 +30,7 @@ namespace chatRoom
         acceptor_.listen();
         poller_.start();
         poller_.updateChannel(acceptor_.getChannelPtr());
-        // acceptor_::handleRead will call ::accept()
-
         threadPool_.start();
-        // set one Poller thread
-        // threadPool_.enqueue(
-            // std::bind(&TcpServer::defaultPollThreadLoop,this)
-        // );
-
     }
 
     void TcpServer::
@@ -46,9 +39,7 @@ namespace chatRoom
         defaultPollThreadLoop();
     }
     
-    // FIXME:
-    // Before stop, the server should send all bytes
-    // in the output buffer of each connection. 
+
     void TcpServer::
     stop()
     {   
@@ -107,28 +98,22 @@ namespace chatRoom
     MsgSent(std::string& msg)
     {
         if(onSendCallback_)
-            threadPool_.enqueue(
-                std::bind(onSendCallback_,msg)
-            );
+            threadPool_.enqueue(onSendCallback_,msg);
     }
 
     void TcpServer::
     defaultPollThreadLoop()
     {
         while(poller_.hasStarted()){
-            // FIXME:
-            // Race condition!
-            // When a channel is handling its event, the event is
-            // still in the poller list, which means that the channel
-            // will appear in the activeList again with the same 
-            // event to handle and ask another thread to do it.
-            // Then, race condition occurs.  
-            ChannelList activeList = poller_.poll(500);
+            ChannelList activeList = std::move(poller_.poll(500));
             {
                 mutexGuard lock(mutex_);
                 for(auto& it: activeList)
                 {
-                    threadPool_.enqueue(&Channel::handleEvent,it.get());
+                    if(it->isHandling() == false){
+                        it->setHandling(true);
+                        threadPool_.enqueue(&Channel::handleEvent,it.get());
+                    }
                 }
             }
         }

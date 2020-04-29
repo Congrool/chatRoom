@@ -64,6 +64,7 @@ namespace chatRoom
                 case ENOMEM:coutErrorLog << "ENOMEM"; break;
                 case ENOTDIR:coutErrorLog << "ENOTDIR"; break;
                 case EROFS:coutErrorLog << "EROFS"; break;
+                default: coutErrorLog << "UNKNOWN ERROR";                
             }
         }
     }
@@ -97,7 +98,28 @@ namespace chatRoom
                             static_cast<socklen_t>(sizeof(sockaddr_in))))
                             < 0)
         {
-            coutErrorLog << "connect Error" << std::endl;
+            coutErrorLog << "connect Error";
+            switch (ret)
+            {
+                case EACCES: coutErrorLog << "EACCES"; break;
+                case EPERM: coutErrorLog << "EPERM"; break;
+                case EADDRINUSE: coutErrorLog << "EADDRINUSE"; break;
+                case EBADF: coutErrorLog << "EBADF"; break;
+                case EADDRNOTAVAIL: coutErrorLog << "EADDRNOTAVAIL"; break;
+                case EAFNOSUPPORT: coutErrorLog << "EAFNOSUPPORT"; break;
+                case EAGAIN: coutErrorLog << "EAGAIN"; break;
+                case EALREADY: coutErrorLog << "EALREADY"; break;
+                case ECONNREFUSED: coutErrorLog << "ECONNREFUSED"; break;
+                case EFAULT: coutErrorLog << "EFAULT"; break;
+                case EINPROGRESS: coutErrorLog << "EINPROGRESS"; break;
+                case EINTR: coutErrorLog << "EINTR"; break;
+                case EISCONN: coutErrorLog << "EISCONN"; break;
+                case ENETUNREACH: coutErrorLog << "ENETUNREACH"; break;
+                case ENOTSOCK: coutErrorLog << "ENOTSOCK"; break;
+                case EPROTOTYPE: coutErrorLog << "EPROTOTYPE"; break;
+                case ETIMEDOUT: coutErrorLog << "ERIMEOUT"; break;
+                default: coutErrorLog << "UNKNOWN ERROR: ret";
+            }
         }
     }
 

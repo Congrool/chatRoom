@@ -80,7 +80,7 @@ namespace chatRoom
         }
         
         if(onConnectionCallback_)
-            threadPool_.enqueue(onConnectionCallback_);
+            onConnectionCallback_();
     }
 
     void TcpServer::
@@ -88,7 +88,7 @@ namespace chatRoom
     {
         
         if(onReceivedCallback_)
-            threadPool_.enqueue(onReceivedCallback_,conn); 
+            onReceivedCallback_(conn); 
         else{
             coutErrorLog << "onReceivedCallback_ is NULL";
         }
@@ -98,7 +98,7 @@ namespace chatRoom
     MsgSent(std::string& msg)
     {
         if(onSendCallback_)
-            threadPool_.enqueue(onSendCallback_,msg);
+            onSendCallback_(msg);
     }
 
     void TcpServer::
@@ -128,8 +128,6 @@ namespace chatRoom
             conns_.erase(conn->getId());
         }
         if(onConnClosedCallback_)
-            threadPool_.enqueue(
-                onConnClosedCallback_,conn->getId()
-            );
+            onConnClosedCallback_(conn->getId());
     }
 } // namespace chatRoom

@@ -15,14 +15,13 @@ namespace chatRoom
 		public:
 			typedef std::function<void()>	taskFunc;
 
-			ThreadPool(int);
+			ThreadPool(int numOfThreads);
 			~ThreadPool();
 			
 			template<typename Fn, typename... Args>
 			void enqueue(Fn&& f, Args&&... args){
 
-				// I don't know if there's some way to check the return type
-				// if(std::is_same<typename std::result_of<Fn(Args...)>::type, void>::value == true){
+				if(std::is_same<typename std::result_of<Fn(Args...)>::type, void>::value == true){
 					auto task = std::bind(std::forward<Fn>(f), std::forward<Args>(args)...);
 					auto taskPtr = std::make_shared<decltype(task)>(task);
 					{
@@ -31,7 +30,7 @@ namespace chatRoom
 						tasks_.emplace([taskPtr](){ (*taskPtr)(); });
 					}
 					cond_.notifyOne();
-				// }
+				}
 			}
 
 			void start();
@@ -42,7 +41,7 @@ namespace chatRoom
 			std::vector<Thread>		workers_;
 			std::queue<taskFunc>	tasks_;
 
-			int				numOfThreads;
+			int				numOfThreads_;
 			bool 			started_;
 			// The order of the following two members
 			// should not be changed, because of list initialization.

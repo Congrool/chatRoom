@@ -9,7 +9,7 @@ namespace chatRoom
 {
 	ThreadPool::ThreadPool(int num)
 	:tasks_(), 
-	numOfThreads(num),
+	numOfThreads_(num),
 	started_(false),
 	mutex_(),
 	cond_(mutex_)
@@ -21,7 +21,7 @@ namespace chatRoom
 			started_ = false;
 		}
 		cond_.notifyAll();		
-		for(int i = 0; i < numOfThreads; ++i)
+		for(int i = 0; i < numOfThreads_; ++i)
 			workers_[i].join();
 	}
 
@@ -39,8 +39,8 @@ namespace chatRoom
 		// the ThreadPool owns, even after the ThreadPool is destructed.
 		// It's dangerous and inconspicuous.
 		// It took me several hours to find the problem. :-(
-		workers_.reserve(numOfThreads);
-		for(int i = 0; i < numOfThreads; ++i){
+		workers_.reserve(numOfThreads_);
+		for(int i = 0; i < numOfThreads_; ++i){
 			workers_.emplace_back(
 				[this](){
 					for(;;){

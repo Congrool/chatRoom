@@ -51,7 +51,7 @@ namespace chatRoom
         return hasWrite;
     }
 
-    void Buffer::append(char* buff, size_t len){
+    void Buffer::append(const char* buff, size_t len){
         if(writeableSize() < len)
             buffer_.resize(writeableStart_+len);
         memcpy(

@@ -31,7 +31,7 @@ namespace chatRoom
 
 			size_t write(int fd);
 
-			void append(char* buff, size_t len);
+			void append(const char* buff, size_t len);
 
 			void append(char ch)
 			{ buffer_.emplace_back(ch); }
@@ -46,6 +46,9 @@ namespace chatRoom
 
 			const char* readStart() 
 			{ return begin() + readableStart_; } 
+
+			char* writeStart()
+			{ return begin() + writeableStart_; }
 
 			// FIXME:
 			// Maybe it should not be exposed to outside.

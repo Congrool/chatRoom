@@ -42,7 +42,7 @@ namespace chatRoom
 
 			size_t readableSize() const;
 
-			size_t writeableSize() const;
+			size_t writableSize() const;
 
 			const char* readStart() 
 			{ return begin() + readableStart_; } 

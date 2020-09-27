@@ -20,10 +20,10 @@ namespace chatRoom
         char extraBuf[buffSizeOnStack];
         struct iovec buff[2];
         buff[0].iov_base = begin()+writeableStart_;
-        buff[0].iov_len = writeableSize();
+        buff[0].iov_len = writableSize();
         buff[1].iov_base = extraBuf;
         buff[1].iov_len = buffSizeOnStack;
-        int ionum = writeableSize() < buffSizeOnStack ? 2 : 1;
+        int ionum = writableSize() < buffSizeOnStack ? 2 : 1;
         ssize_t hasRead = ::readv(fd, buff, 2);
         if(hasRead < 0){
             // Handle Error
@@ -31,12 +31,12 @@ namespace chatRoom
             if(savedErrno == EINVAL)
                 coutErrorLog << "readv error: EINVAL";
         }
-        else if(static_cast<size_t>(hasRead) <= writeableSize()){
+        else if(static_cast<size_t>(hasRead) <= writableSize()){
             writeableStart_ += hasRead;
         }
         else{
-            size_t tocpy = static_cast<size_t>(hasRead) - writeableSize();
-            buffer_.resize(tocpy);
+            size_t tocpy = static_cast<size_t>(hasRead) - writableSize();
+            buffer_.resize(writableSize() + tocpy);
             std::copy(extraBuf,extraBuf+tocpy,buffer_.end());
             writeableStart_ += hasRead;
         }
@@ -52,7 +52,7 @@ namespace chatRoom
     }
 
     void Buffer::append(const char* buff, size_t len){
-        if(writeableSize() < len)
+        if(writableSize() < len)
             buffer_.resize(writeableStart_+len);
         memcpy(
             buffer_.begin().base()+writeableStart_,
@@ -77,7 +77,7 @@ namespace chatRoom
         return static_cast<size_t>(writeableStart_ - readableStart_);
     }
 
-    size_t Buffer::writeableSize() const{
+    size_t Buffer::writableSize() const{
         return static_cast<size_t>(buffer_.size() - writeableStart_);
     }
 
